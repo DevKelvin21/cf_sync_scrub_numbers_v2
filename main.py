@@ -9,46 +9,43 @@ from google.cloud import firestore
 from google.cloud import storage
 
 
-def count_csv_rows(gs_path: str) -> int:
+def count_csv_rows(path: str) -> int:
     """
-    Downloads a CSV file from Cloud Storage (given a gs:// URL),
+    Downloads a CSV file from Cloud Storage (given a folder/file_name URL),
     counts the rows excluding the header, and returns the count.
     If any issue occurs or the file content is empty, returns 0.
     """
-    if not gs_path.startswith("gs://"):
-        logging.warning(f"Invalid path format: {gs_path}")
-        return 0
-
+ 
     try:
-        # Extract bucket and blob name from gs:// path
-        path_parts = gs_path[5:].split("/", 1)
-        bucket_name = path_parts[0]
-        blob_name = path_parts[1] if len(path_parts) > 1 else ""
+        bucket_name = os.getenv("BUCKET_NAME")
+        if not bucket_name:
+            logging.error("BUCKET_NAME environment variable is not set.")
+            return 0
+
+        # Use the entire path to include any folder structure
+        blob_name = path.lstrip("/")
         if not blob_name:
-            logging.warning(f"No blob name found in path: {gs_path}")
+            logging.warning(f"No blob name found in path: {path}")
             return 0
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
 
-        # Download the file content as text
         content = blob.download_as_text()
         if not content:
             return 0
 
-        # Use StringIO to process the CSV content
         csv_file = StringIO(content)
         reader = csv.reader(csv_file)
 
-        # Skip the header row and count the remaining rows
         header = next(reader, None)
         if header is None:
             return 0
         row_count = sum(1 for _ in reader)
         return row_count
     except Exception as e:
-        logging.error(f"Error processing file {gs_path}: {e}")
+        logging.error(f"Error processing file {path}: {e}")
         return 0
 
 

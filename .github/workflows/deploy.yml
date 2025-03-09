@@ -42,4 +42,4 @@ jobs:
             --allow-unauthenticated \
             --entry-point main \
             --region=${{ secrets.GCP_REGION }} \
-            --set-env-vars FIRESTORE_COLLECTION=${{ secrets.FIRESTORE_COLLECTION }}
+            --set-env-vars FIRESTORE_COLLECTION=${{ secrets.FIRESTORE_COLLECTION }}, BUCKET_NAME=${{ secrets.BUCKET_NAME }}
